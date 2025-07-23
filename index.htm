@@ -318,11 +318,15 @@
       // --- INIZIALIZZAZIONE FIREBASE ---
       async function initializeFirebase() {
         setLogLevel("debug");
-        const firebaseConfig =
-          typeof __firebase_config !== "undefined"
-            ? JSON.parse(__firebase_config)
-            : undefined;
-        appId = typeof __app_id !== "undefined" ? __app_id : appId;
+        const firebaseConfig = {
+    apiKey: "AIzaSyBvcXRl6om_VkXruh932WoND4EpHeX_Q4E",
+    authDomain: "car-booking-7bfc5.firebaseapp.com",
+    projectId: "car-booking-7bfc5",
+    storageBucket: "car-booking-7bfc5.firebasestorage.app",
+    messagingSenderId: "112306451802",
+    appId: "1:112306451802:web:b6ef397831ed1b5da96f63",
+    measurementId: "G-YT53Z71PYX"
+  };
 
         if (!firebaseConfig) {
           console.error("Configurazione Firebase non trovata.");
