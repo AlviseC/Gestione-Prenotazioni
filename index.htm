@@ -19,6 +19,18 @@
     <!-- Icone: Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
+    <!-- MODIFICA 1: Aggiunto SDK di OneSignal -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignal = window.OneSignal || [];
+      OneSignal.push(function() {
+        OneSignal.init({
+          // MODIFICA 2: Inserisci qui la tua App ID di OneSignal
+          appId: "INSERISCI_LA_TUA_APP_ID_QUI", 
+        });
+      });
+    </script>
+
     <style>
       /* Stile di base con il font Inter */
       body {
@@ -368,10 +380,10 @@
             "car-card bg-white p-4 rounded-xl shadow-sm border border-gray-200 cursor-pointer hover:shadow-lg hover:-translate-y-1";
           card.dataset.carId = car.id;
           card.innerHTML = `
-                    <img src="${car.imageUrl}" alt="Immagine di ${car.name}" class="w-full h-40 object-cover rounded-lg mb-4" onerror="this.onerror=null;this.src='https://placehold.co/400x300/e2e8f0/475569?text=Immagine+non+disponibile';">
-                    <h3 class="font-bold text-lg">${car.name}</h3>
-                    <p class="text-sm text-gray-500">Targa: ${car.plate}</p>
-                `;
+                        <img src="${car.imageUrl}" alt="Immagine di ${car.name}" class="w-full h-40 object-cover rounded-lg mb-4" onerror="this.onerror=null;this.src='https://placehold.co/400x300/e2e8f0/475569?text=Immagine+non+disponibile';">
+                        <h3 class="font-bold text-lg">${car.name}</h3>
+                        <p class="text-sm text-gray-500">Targa: ${car.plate}</p>
+                    `;
           card.addEventListener("click", () => handleCarSelection(car.id));
           carListElement.appendChild(card);
         });
@@ -417,20 +429,20 @@
             }
 
             bookingElement.innerHTML = `
-                        <div>
-                            <p class="font-semibold text-gray-800">${
-                              booking.userName
-                            }</p>
-                            <p class="text-sm text-gray-600">ha prenotato <span class="font-medium">${
-                              car ? car.name : "Auto sconosciuta"
-                            }</span></p>
-                            <p class="text-sm text-blue-600 font-medium mt-1 flex items-center gap-1">
-                                <i class="ph-fill ph-calendar"></i>
-                                ${bookingDate}
-                            </p>
-                        </div>
-                        ${deleteButtonHTML}
-                    `;
+                                <div>
+                                    <p class="font-semibold text-gray-800">${
+                                      booking.userName
+                                    }</p>
+                                    <p class="text-sm text-gray-600">ha prenotato <span class="font-medium">${
+                                      car ? car.name : "Auto sconosciuta"
+                                    }</span></p>
+                                    <p class="text-sm text-blue-600 font-medium mt-1 flex items-center gap-1">
+                                        <i class="ph-fill ph-calendar"></i>
+                                        ${bookingDate}
+                                    </p>
+                                </div>
+                                ${deleteButtonHTML}
+                            `;
             bookingsListElement.appendChild(bookingElement);
           });
 
@@ -550,7 +562,9 @@
             "La tua prenotazione è stata confermata.",
             "success"
           );
-          sendBookingConfirmationEmail(newBooking);
+          
+          // MODIFICA 4: Chiama la nuova funzione per le notifiche push
+          sendPushNotification(newBooking);
 
           bookingForm.reset();
           selectedCarId = null;
@@ -639,26 +653,41 @@
         );
       }
 
-      // --- FUNZIONE SIMULAZIONE EMAIL ---
-      function sendBookingConfirmationEmail(bookingDetails) {
+      // --- MODIFICA 3: Nuova funzione per inviare notifiche PUSH con OneSignal ---
+      // NOTA: Questa funzione invia una notifica a TUTTI gli utenti che hanno accettato le notifiche.
+      // Per inviare a utenti specifici, è necessaria una logica più avanzata (Cloud Functions).
+      function sendPushNotification(bookingDetails) {
         const car = cars.find((c) => c.id === bookingDetails.carId);
         const date = bookingDetails.bookingDate
           .toDate()
           .toLocaleDateString("it-IT");
+        
+        const notificationContent = {
+            // Titolo della notifica
+            headings: {
+                en: "Nuova Prenotazione",
+                it: "Nuova Prenotazione"
+            },
+            // Contenuto del messaggio
+            contents: {
+                en: `${bookingDetails.userName} ha prenotato ${car.name} per il ${date}.`,
+                it: `${bookingDetails.userName} ha prenotato ${car.name} per il ${date}.`
+            },
+            // Segmento di utenti a cui inviare (in questo caso, tutti)
+            included_segments: ["Subscribed Users"]
+        };
 
-        console.log("--- SIMULAZIONE INVIO EMAIL ---");
-        console.log(`A: ${bookingDetails.userName}`);
-        console.log("Oggetto: Conferma Prenotazione Auto Aziendale");
-        console.log("---");
-        console.log(`Ciao ${bookingDetails.userName},`);
-        console.log(
-          `La tua prenotazione per ${car.name} per il giorno ${date} è stata confermata.`
-        );
-        console.log("--- FINE SIMULAZIONE ---");
-        // NOTA: In un'applicazione reale, questa funzione dovrebbe fare una chiamata
-        // a un endpoint di backend (es. una Firebase Cloud Function) che si occupa
-        // di inviare l'email in modo sicuro tramite un servizio come SendGrid o Mailgun.
+        // Invia la notifica tramite l'API REST di OneSignal.
+        // È necessario usare una Cloud Function per mantenere sicura la REST API Key.
+        // Per una demo lato client, si può usare il metodo `OneSignal.User.pushSubscription.optIn()`
+        // e poi inviare notifiche dal pannello di OneSignal.
+        // Questa implementazione è una simulazione concettuale.
+        console.log("--- INVIO NOTIFICA PUSH (Simulazione) ---");
+        console.log("Titolo:", notificationContent.headings.it);
+        console.log("Messaggio:", notificationContent.contents.it);
+        console.log("Per un invio reale e sicuro, usare una Firebase Cloud Function per chiamare l'API di OneSignal.");
       }
+
 
       // --- FUNZIONI UTILITY (MODALI) ---
       function showNotification(title, message, type = "success") {
